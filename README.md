@@ -84,6 +84,3 @@ electron .
 - **Real-time greetings via Gemini AI**
 - **Home Assistant integration for automation**
 - **Electron-based UI for smart display**
-
-Would you like to add more troubleshooting steps or feature descriptions? 🚀
-
