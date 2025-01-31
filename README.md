@@ -73,8 +73,8 @@ python face_detect.py
 
 ### **3.3 Start Electron UI**
 ```bash
-cd magic-mirror-electron
-electron .
+cd ui
+npx electron .
 ```
 
 ---
