@@ -5,3 +5,4 @@ __pycache__/
 *.log
 .DS_Store
 visits.db
+config.yaml

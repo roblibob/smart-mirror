@@ -1,0 +1,17 @@
+llm:
+  # LLM provider
+  provider: "gemini"
+  api_key: your-api-key
+  model: "gemini-1.5-flash"
+  prompt: "You are a funny and sarcastic AI assistant. Greet the user according to time of day and present the agenda. The output is converted to speach so don't use headers or any other markdown. Be brief and consice" 
+
+calendars:
+  # Person identifier and calendar URL
+  JohnDoe: https://example.com/calendar.ics
+
+# Text-to-speech provider
+tts:
+  provider: "picovoice"
+  api_key: "your-picovoice-api-key"
+  model: "tts-models/orca-params-female.pv"
+  

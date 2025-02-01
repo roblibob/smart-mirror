@@ -1,9 +1,12 @@
 import cv2
 import time
-from database import init_db, update_last_seen, get_last_seen
-from face_detect import load_known_faces, detect_faces
-from api_client import get_greeting, update_recognized_face
-from tts import speak_text
+from modules.database import init_db, update_last_seen, get_last_seen
+from modules.face_detect import load_known_faces, detect_faces
+from modules.api_client import get_greeting, update_recognized_face
+from modules.tts import speak_text
+from modules.calendar_client import get_today_events
+from modules.weather import get_weather
+from config_loader import config
 
 # Initialize components
 conn, cursor = init_db()
@@ -25,10 +28,12 @@ while True:
         cooldown_tracker[name] = now
         last_seen = get_last_seen(cursor, name)
         update_last_seen(cursor, name)
+        agenda = get_today_events(name)
+        weather = get_weather()
+        greeting = get_greeting(name, agenda, weather)
 
-        greeting = get_greeting(name)
-        if last_seen:
-            greeting += f" Welcome back! You last visited on {last_seen}."
+        #if last_seen:
+        #    greeting += f" Welcome back! You last visited on {last_seen}."
         
         update_recognized_face(name, greeting)
         print(greeting)
