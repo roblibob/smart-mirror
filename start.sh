@@ -1,37 +1,34 @@
 #!/bin/bash
-
-echo "Starting Smart Mirror..."
-
-# Activate virtual environment
 source venv/bin/activate
 
-# Start FastAPI server in the background
-echo "Starting FastAPI..."
+echo "🚀 Building React UI..."
+cd ui || exit 1
+npm install
+npm run build
 
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload &
-API_PID=$!
+echo "✅ React build complete."
 
-# Start face detection script in the background
-echo "Starting Face Recognition..."
-python main.py &
-FACE_PID=$!
-
-# Start Electron UI in the background
-echo "Starting Electron UI..."
-cd ui
+echo "🔄 Starting Electron..."
 npm start &
 ELECTRON_PID=$!
 cd ..
 
-# Function to stop all processes
+echo "🔄 Starting API..."
+uvicorn api.main:app --host 127.0.0.1 --port 8000 &
+API_PID=$!
+
+echo "🎭 Starting Face Recognition..."
+python3 main.py &
+MAIN_PID=$!
+
+# Trap to clean up processes on exit
 cleanup() {
-    echo "Stopping Smart Mirror..."
-    kill $API_PID $FACE_PID $ELECTRON_PID
+    echo "🛑 Stopping processes..."
+    kill $ELECTRON_PID $API_PID $MAIN_PID
     exit 0
 }
 
-# Trap exit signals and call cleanup()
 trap cleanup SIGINT SIGTERM
 
-# Keep script running until stopped
+# Keep script running
 wait

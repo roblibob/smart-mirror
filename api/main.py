@@ -1,10 +1,11 @@
+from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from google import generativeai as genai
-from modules.weather import get_weather
-from datetime import datetime
 from config_loader import config
+from modules.weather import get_weather
+from modules.calendar_client import get_agenda
 
 
 GEMINI_API_KEY = config["llm"]["api_key"]
@@ -21,14 +22,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/")
-def read_root():
-    return {"message": "API is running"}
-
-@app.get("/status")
-def status():
-    return {"status": "OK", "message": "The API is online"}
 
 @app.post("/greet/")
 async def greet(request: Request):
@@ -67,6 +60,13 @@ async def update_recognized_faces(request: Request):
     recognized_faces["name"] = data.get("name", "Unknown")
     recognized_faces["greeting"] = data.get("greeting", "No greeting available.")
     return {"status": "updated"}
+
+@app.get("/agenda")
+def agenda():
+    global recognized_faces
+    """Returns the next 7 days' agenda."""
+    person = recognized_faces["name"] if recognized_faces["name"] != 'None' else 'default'
+    return {"agenda": get_agenda(person)}
 
 @app.get("/weather")
 def weather():
