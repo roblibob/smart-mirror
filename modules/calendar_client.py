@@ -2,7 +2,7 @@ import os
 import sys
 import requests
 from icalendar import Calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config_loader import config
@@ -43,5 +43,33 @@ def get_today_events(name: str):
 
     return "\n".join(events) if events else "No events scheduled today."
 
+# Get 7 days agenda
+def get_agenda(name: str):
+    """Parses the ICS calendar and extracts the next 7 days' events."""
+    person = name if name != 'None' else 'default'
+    ics_data = fetch_calendar(person)
+    if not ics_data:
+        return "Could not fetch calendar."
+
+    calendar = Calendar.from_ical(ics_data)
+    today = datetime.now().date()
+
+    events = []
+    for component in calendar.walk():
+        if component.name == "VEVENT":
+            event_start = component.get("dtstart").dt
+            event_summary = component.get("summary")
+
+            # Convert to date if it's a datetime object
+            event_date = event_start.date() if isinstance(event_start, datetime) else event_start
+
+            # Check if the event is within the next 7 days
+            if today <= event_date <= today + timedelta(days=7):
+                event_time = event_start.strftime("%H:%M") if isinstance(event_start, datetime) else "All day"
+                events.append({ "date": event_date, "time": event_time, "summary": event_summary })
+
+
+    return events
+
 if __name__ == "__main__":
-    print(get_today_events("Robert"))
+    print(get_agenda("Robert"))

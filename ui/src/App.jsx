@@ -1,15 +1,16 @@
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
+import { useState } from "react";
 import BaseWidget from "./components/BaseWidget";
 import MessageWidget from "./components/MessageWidget";
 import WeatherWidget from "./components/WeatherWidget";
 import ClockWidget from "./components/ClockWidget";
-import { useState } from "react";
+import CalendarWidget from "./components/CalendarWidget";
 
 function App() {
   const [widgets, setWidgets] = useState([
     { id: "clock", component: <ClockWidget /> },
     { id: "weather", component: <WeatherWidget /> },
-    { id: "future1", component: <h2 className="text-xl font-bold">Future Widget 1</h2> },
+    { id: "calendar", component: <CalendarWidget /> },
     { id: "future2", component: <h2 className="text-xl font-bold">Future Widget 2</h2> },
     { id: "message", component: <MessageWidget />, extraClass: "col-span-3" },
     { id: "empty2", component: null },

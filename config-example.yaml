@@ -6,6 +6,8 @@ llm:
   prompt: "You are a funny and sarcastic AI assistant. Greet the user according to time of day and present the agenda. The output is converted to speach so don't use headers or any other markdown. Be brief and consice" 
 
 calendars:
+  # Default calendar URL when no person is detected
+  default: https://example.com/default-calendar.ics  
   # Person identifier and calendar URL
   JohnDoe: https://example.com/calendar.ics
 
