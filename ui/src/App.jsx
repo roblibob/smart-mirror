@@ -1,4 +1,5 @@
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import BaseWidget from "./components/BaseWidget";
 import MessageWidget from "./components/MessageWidget";
 import WeatherWidget from "./components/WeatherWidget";
 import ClockWidget from "./components/ClockWidget";
@@ -10,7 +11,7 @@ function App() {
     { id: "weather", component: <WeatherWidget /> },
     { id: "future1", component: <h2 className="text-xl font-bold">Future Widget 1</h2> },
     { id: "future2", component: <h2 className="text-xl font-bold">Future Widget 2</h2> },
-    { id: "message", component: <MessageWidget /> },
+    { id: "message", component: <MessageWidget />, extraClass: "col-span-3" },
     { id: "empty2", component: null },
     { id: "empty3", component: null },
     { id: "empty4", component: null },
@@ -20,40 +21,31 @@ function App() {
     if (!result.destination) return;
 
     const newWidgets = [...widgets];
-
-    // Swap places instead of shifting
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
+
+    // Swap elements instead of shifting
     [newWidgets[sourceIndex], newWidgets[destinationIndex]] = [newWidgets[destinationIndex], newWidgets[sourceIndex]];
 
     setWidgets(newWidgets);
-  };
+};
+
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="h-screen w-screen bg-black text-white flex items-center justify-center">
+      <div className="w-screen h-screen bg-black text-white flex">
+
         <Droppable droppableId="grid">
           {(provided) => (
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className="grid grid-cols-3 grid-rows-3 gap-4 w-4/5 h-4/5"
+              className="w-screen h-screen grid grid-cols-3 grid-rows-3 gap-4 w-4/5 h-4/5"
             >
               {widgets.map((widget, index) => (
-                <Draggable key={widget.id} draggableId={widget.id} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`bg-gray-800 p-6 rounded-lg shadow-lg flex justify-center items-center cursor-grab transition-transform ${
-                        snapshot.isDragging ? "scale-105" : "scale-100"
-                      }`}
-                    >
-                      {widget.component}
-                    </div>
-                  )}
-                </Draggable>
+                <BaseWidget key={widget.id} id={widget.id} index={index} extraClass={widget.extraClass}>
+                  {widget.component}
+                </BaseWidget>
               ))}
               {provided.placeholder} {/* <-- Ensure this is inside the Droppable div */}
             </div>
