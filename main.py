@@ -29,7 +29,9 @@ while True:
         last_seen = get_last_seen(cursor, name)
         update_last_seen(cursor, name)
         agenda = get_today_events(name)
-        weather = get_weather()
+        weather_data = get_weather()
+        weather = f"{weather_data['current_condition'][0]['weatherDesc'][0]['value']} and {weather_data['current_condition'][0]['temp_C']}°C"
+        print(weather)
         greeting = get_greeting(name, agenda, weather)
 
         #if last_seen:

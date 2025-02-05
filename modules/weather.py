@@ -7,7 +7,6 @@ def get_weather():
     url = f"https://wttr.in/{city}?format=j1"
     try:
         response = requests.get(url)
-        print(response.text)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
