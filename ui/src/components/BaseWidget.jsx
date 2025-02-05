@@ -14,18 +14,9 @@ const BaseWidget = ({ id, index, extraClass, children }) => {
 
 
   return (
-    <Draggable draggableId={id} index={index}>
-      {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={`bg-black p-6 rounded-lg shadow-lg flex cursor-grab transition-transform} ${alignmentClass} ${extraClass}`}
-        >
-          {children}
-        </div>
-      )}
-    </Draggable>
+    <div className={`h-min bg-black p-6 rounded-lg shadow-lg flex cursor-grab transition-transform} ${alignmentClass} ${extraClass}`}>
+      {children}
+    </div>
   );
 };
 

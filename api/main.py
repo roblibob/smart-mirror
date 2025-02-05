@@ -70,5 +70,5 @@ def agenda():
 
 @app.get("/weather")
 def weather():
-    return {"weather": get_weather()}
+    return get_weather()
 
