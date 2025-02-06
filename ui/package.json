@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev:vite": "vite",
+    "dev:electron": "cross-env NODE_ENV=development electron main.js",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:vite\" \"npm run dev:electron\"",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "electron main.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.3",
@@ -23,6 +24,8 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "electron": "^34.0.2",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.2",

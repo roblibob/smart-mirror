@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from google import generativeai as genai
 from config_loader import config
 from modules.weather import get_weather
-from modules.calendar_client import get_agenda
+from modules.calendar.google import get_agenda
 
 
 GEMINI_API_KEY = config["llm"]["api_key"]
@@ -13,6 +13,7 @@ GEMINI_MODEL_NAME = config["llm"]["model"]
 #HOME_ASSISTANT_URL = os.getenv("HOME_ASSISTANT_URL")
 
 genai.configure(api_key=GEMINI_API_KEY)
+
 
 app = FastAPI()
 app.add_middleware(

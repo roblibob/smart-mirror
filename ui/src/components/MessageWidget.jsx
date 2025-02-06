@@ -28,6 +28,10 @@ function MessageWidget() {
     return () => clearInterval(interval);
   }, [message]);
 
+  if (!isSpeaking) {
+    return null;
+  }
+
   return (
     <motion.div
       className="relative p-6 rounded-lg shadow-lg flex flex-col items-center justify-center w-full h-full bg-black"
