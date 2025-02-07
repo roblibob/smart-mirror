@@ -1,5 +1,5 @@
 import importlib
-import os, sys
+import traceback
 from core.config_loader import config
 from core.event_bus import event_bus
 
@@ -26,6 +26,7 @@ def load_modules():
                 print(f"⚠️ Module {module_path} not found, skipping: {e}")
             except Exception as e:
                 print(f"⚠️ Error loading module {module_path}: {e}")
+                print(traceback.format_exc())
 
     return loaded_modules
 

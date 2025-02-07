@@ -2,8 +2,8 @@ import subprocess
 import time
 import threading
 import signal
+import traceback
 from core.module_loader import modules  # Load modules
-from core.event_bus import event_bus  # Global event bus
 from fastapi import FastAPI, WebSocket
 from core.websocket_manager import websocket_manager
 import uvicorn
@@ -17,7 +17,12 @@ def start_electron():
     def run():
         global electron_process
         try:
-            electron_process = subprocess.Popen(["npm", "run", "dev"], cwd="ui")
+            electron_process = subprocess.Popen(
+                ["npm", "run", "dev"],
+                cwd="ui",
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
             print("✅ Electron UI started.")
             electron_process.wait()  # Wait for Electron to exit before returning
         except Exception as e:
@@ -42,6 +47,7 @@ def update_loop():
                 module.run_update()
             except Exception as e:
                 print(f"⚠️ Error updating module {name}: {e}")
+                print(traceback.print_exc())
 
         time.sleep(1)  # Adjust update interval as needed
 
@@ -69,6 +75,8 @@ start_electron()
 # Start FastAPI server
 start_fastapi()
 
+# Wait for Electron to start
+time.sleep(2)
 # Attach signal handler for Ctrl+C
 signal.signal(signal.SIGINT, handle_shutdown)
 

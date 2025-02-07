@@ -3,6 +3,7 @@ from fastapi import WebSocket
 class WebSocketManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
+        # Register as a listener for all events
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()

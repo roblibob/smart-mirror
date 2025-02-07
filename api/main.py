@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from google import generativeai as genai
-from config_loader import config
+from core.config_loader import config
 from modules.weather import get_weather
 from modules.calendar.google import get_agenda
 

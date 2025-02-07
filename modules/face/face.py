@@ -60,7 +60,6 @@ class Module(BaseModule):
         return recognized_faces
 
     def update(self):
-        print("📸 Running face detection...", flush=True)
         """Runs face detection and emits an event when a face is recognized."""
         ret, frame = self.camera.read()
         if not ret:
@@ -71,14 +70,13 @@ class Module(BaseModule):
         for name in recognized_faces:
             now = time.time()
             if name in self.cooldown_tracker and (now - self.cooldown_tracker[name] < self.cooldown_time):
-                print(f"Skipping greeting for {name}, still in cooldown.")
+                print(f"⏳ Cooldown active for {name}, skipping...")
                 continue
 
             self.cooldown_tracker[name] = now
 
             # Emit an event to notify that a face was detected
-            self.event_bus.emit("face_detected", {"name": name})
-            print(f"👤 Detected face: {name}")
+            self.emit_event("face_detected", {"name": name})
 
     def cleanup(self):
         """Releases resources."""
