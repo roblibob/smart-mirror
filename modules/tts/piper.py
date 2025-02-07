@@ -69,6 +69,7 @@ class Module(BaseModule):
 
         print(f"🔊 Synthesizing speech: {text}")
         audio_path = self.synthesize(text)
+        self.event_bus.emit("tts_start", {"audio_path": audio_path, "text": text})
 
         if self.os_type == "Darwin":  # macOS
             subprocess.run(["afplay", audio_path], check=True)
@@ -76,7 +77,5 @@ class Module(BaseModule):
             subprocess.run(["aplay", audio_path], check=True)
         else:
             print(f"⚠️ Unsupported OS: {self.os_type}. Cannot play audio.")
-        
-        print(f"🔊 Finished playing: {file_path}")
 
         self.event_bus.emit("tts_done", {"audio_path": audio_path})

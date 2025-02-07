@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import BaseWidget from "./components/BaseWidget";
-// import MessageWidget from "./components/MessageWidget";
+import MessageWidget from "./components/MessageWidget";
 // import WeatherWidget from "./components/WeatherWidget";
 import ClockWidget from "./components/ClockWidget";
 import CalendarWidget from "./components/CalendarWidget";
@@ -34,7 +34,9 @@ function App() {
   const [widgets, setWidgets] = useState([
     // { id: "weather", component: <WeatherWidget /> },
     { id: "clock", component: <ClockWidget /> },
+    { id: "empty1", component: null },
     { id: "calendar", component: <CalendarWidget /> },
+    { id: "message", component: <MessageWidget />, extraClass: "col-span-3" },
     // { id: "message", component: <MessageWidget />, extraClass: "col-span-3" },
   ]);
 
