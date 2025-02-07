@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import websocketManager from "../utils/websocket";
 
-const WS_URL = "ws://127.0.0.1:8000/ws"; // WebSocket URL
-
 function CalendarWidget() {
   const [events, setEvents] = useState([]);
 

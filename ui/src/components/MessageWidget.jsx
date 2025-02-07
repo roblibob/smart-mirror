@@ -1,32 +1,25 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion"; // For smooth animations
+import websocketManager from "../utils/websocket";
 
 function MessageWidget() {
   const [message, setMessage] = useState("Loading...");
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
-    const fetchMessage = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/recognized_faces");
-        const data = await response.json();
-
-        if (data.greeting && data.greeting !== message) {
-          setMessage(data.greeting);
-          setIsSpeaking(true); // Start animation when message updates
-          setTimeout(() => setIsSpeaking(false), 4000); // Stop animation after 4s
-        }
-      } catch (error) {
-        setMessage("Unable to fetch greeting.");
-      }
+    const handleTTS = (data) => {
+      console.log("🤖 Received AI message:", data);
+      setMessage(data.text);
+      setIsSpeaking(true);
     };
 
-    // Poll every 2 seconds
-    const interval = setInterval(fetchMessage, 2000);
-
-    // Cleanup on unmount
-    return () => clearInterval(interval);
-  }, [message]);
+    websocketManager.subscribe("tts_start", handleTTS);
+    websocketManager.subscribe("tts_done", () => setIsSpeaking(false));
+    return () => {
+      websocketManager.unsubscribe("tts_done", () => setIsSpeaking(false));
+      websocketManager.unsubscribe("tts_start", handleTTS);
+    };
+  }, []);
 
   if (!isSpeaking) {
     return null;
