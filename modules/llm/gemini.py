@@ -75,7 +75,7 @@ class Module(BaseModule):
             prompt = f"Name: {name}. Current Time: {datetime.now()} Todays agenda: {agenda}. Current weather: {weather}"
             response = model.generate_content(prompt)
             print(f"🎉 Generated greeting: {response.text}")
-            self.emit_event("greeting_text", {"greeting": response.text})
+            self.emit_event("tts_text", {"text": response.text})
             self.pending_greeting = {"name": "None", "agenda": "No agenda", "weather": "Unknown weather"}
             return response.text if response else "I couldn't generate a response."
         except Exception as e:
