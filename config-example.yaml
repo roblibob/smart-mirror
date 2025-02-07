@@ -3,11 +3,11 @@ llm:
   provider: "gemini"
   api_key: your-api-key
   model: "gemini-1.5-flash"
-  prompt: "You are a funny and sarcastic AI assistant. Greet the user according to time of day and present the agenda. The output is converted to speach so don't use headers or any other markdown. Be brief and consice" 
+  prompt: "You are a funny and sarcastic AI assistant. Greet the user according to time of day and present the agenda. The output is converted to speach so don't use headers or any other markdown. Be brief and consice"
 
 calendars:
   # Default calendar URL when no person is detected
-  default: https://example.com/default-calendar.ics  
+  default: https://example.com/default-calendar.ics
   # Person identifier and calendar URL
   JohnDoe: https://example.com/calendar.ics
 
@@ -16,4 +16,12 @@ tts:
   provider: "picovoice"
   api_key: "your-picovoice-api-key"
   model: "tts-models/orca-params-female.pv"
-  
+
+weather:
+  provider: wttr
+  city: "Skurup"
+
+home_assistant:
+  url: "http://192.168.1.100:8123"
+  api_key: your-api-key
+  light: "light.magic_mirror"

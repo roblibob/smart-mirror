@@ -1,16 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BaseWidget from "./components/BaseWidget";
-import MessageWidget from "./components/MessageWidget";
-import WeatherWidget from "./components/WeatherWidget";
+// import MessageWidget from "./components/MessageWidget";
+// import WeatherWidget from "./components/WeatherWidget";
 import ClockWidget from "./components/ClockWidget";
 import CalendarWidget from "./components/CalendarWidget";
 
 function App() {
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:8000/ws");
+  
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📡 Received event:", data);
+  
+      if (data.event === "calendar_update") {
+        console.log("📅 Calendar Updated:", data.data);
+      }
+  
+      if (data.event === "face_detected") {
+        console.log("👀 Face Detected:", data.data);
+      }
+  
+      // Handle different event types here
+    };
+  
+    socket.onclose = () => {
+      console.log("❌ WebSocket disconnected");
+    };
+  
+    return () => socket.close(); // Cleanup on unmount
+  }, []);
+  
   const [widgets, setWidgets] = useState([
-    { id: "weather", component: <WeatherWidget /> },
+    // { id: "weather", component: <WeatherWidget /> },
     { id: "clock", component: <ClockWidget /> },
     { id: "calendar", component: <CalendarWidget /> },
-    { id: "message", component: <MessageWidget />, extraClass: "col-span-3" },
+    // { id: "message", component: <MessageWidget />, extraClass: "col-span-3" },
   ]);
 
   return (

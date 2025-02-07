@@ -1,50 +1,89 @@
-import cv2
+import subprocess
 import time
-from modules.database import init_db, update_last_seen, get_last_seen
-from modules.face_detect import load_known_faces, detect_faces
-from modules.api_client import get_greeting, update_recognized_face
-from modules.tts import speak_text
-from modules.calendar_client import get_today_events
-from modules.weather import get_weather
-from config_loader import config
+import threading
+import signal
+import traceback
+from core.module_loader import modules  # Load modules
+from fastapi import FastAPI, WebSocket
+from core.websocket_manager import websocket_manager
+import uvicorn
 
-# Initialize components
-conn, cursor = init_db()
-known_face_encodings, known_face_names = load_known_faces()
-camera = cv2.VideoCapture(0)
-cooldown_tracker = {}
-COOLDOWN_TIME = 100  # Adjust cooldown duration
+RUNNING = True  # Control loop execution
+electron_process = None  # Store Electron process
+app = FastAPI()
 
-while True:
-    ret, frame = camera.read()
-    recognized_faces, face_locations = detect_faces(frame, known_face_encodings, known_face_names)
+def start_electron():
+    """Starts the Electron UI in a separate thread."""
+    def run():
+        global electron_process
+        try:
+            electron_process = subprocess.Popen(
+                ["npm", "run", "dev"],
+                cwd="ui",
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            print("✅ Electron UI started.")
+            electron_process.wait()  # Wait for Electron to exit before returning
+        except Exception as e:
+            print(f"⚠️ Error starting Electron: {e}")
 
-    for name in recognized_faces:
-        now = time.time()
-        if name in cooldown_tracker and (now - cooldown_tracker[name] < COOLDOWN_TIME):
-            print(f"Skipping greeting for {name}, still in cooldown.")
-            continue
+    electron_thread = threading.Thread(target=run, daemon=True)
+    electron_thread.start()
 
-        cooldown_tracker[name] = now
-        last_seen = get_last_seen(cursor, name)
-        update_last_seen(cursor, name)
-        agenda = get_today_events(name)
-        weather_data = get_weather()
-        weather = f"{weather_data['current_condition'][0]['weatherDesc'][0]['value']} and {weather_data['current_condition'][0]['temp_C']}°C"
-        print(weather)
-        greeting = get_greeting(name, agenda, weather)
+def start_fastapi():
+    """Starts FastAPI server in a separate thread."""
+    def run():
+        uvicorn.run(app, host="0.0.0.0", port=8000)
 
-        #if last_seen:
-        #    greeting += f" Welcome back! You last visited on {last_seen}."
-        
-        update_recognized_face(name, greeting)
-        print(greeting)
-        speak_text(greeting)
+    api_thread = threading.Thread(target=run, daemon=True)
+    api_thread.start()
 
-    time.sleep(1)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+def update_loop():
+    """ Continuously updates all modules in separate threads. """
+    while RUNNING:
+        for name, module in modules.items():
+            try:
+                module.run_update()
+            except Exception as e:
+                print(f"⚠️ Error updating module {name}: {e}")
+                print(traceback.print_exc())
 
-camera.release()
-cv2.destroyAllWindows()
-conn.close()
+        time.sleep(1)  # Adjust update interval as needed
+
+def handle_shutdown(sig, frame):
+    """ Gracefully handles shutdown (Ctrl+C). """
+    global RUNNING
+    RUNNING = False
+    print("\n🛑 Shutting down...")
+    time.sleep(1)  # Allow cleanup
+    exit(0)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """Handles WebSocket connections from frontend clients."""
+    await websocket_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()  # Keep connection alive (or process messages)
+    except:
+        websocket_manager.disconnect(websocket)
+
+# Start Electron
+start_electron()
+
+# Start FastAPI server
+start_fastapi()
+
+# Wait for Electron to start
+time.sleep(2)
+# Attach signal handler for Ctrl+C
+signal.signal(signal.SIGINT, handle_shutdown)
+
+# Start the update loop in a separate thread
+print("🚀 Starting update loop thread...")
+update_thread = threading.Thread(target=update_loop, daemon=True)
+update_thread.start()
+
+print("✅ Smart Mirror Update Engine Running...")
+update_thread.join()  # Keep the main thread alive
