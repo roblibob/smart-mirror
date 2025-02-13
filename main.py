@@ -2,7 +2,6 @@ import subprocess
 import time
 import threading
 import signal
-import traceback
 from core.module_loader import modules  # Load modules
 from fastapi import FastAPI, WebSocket
 from core.websocket_manager import websocket_manager
@@ -34,7 +33,7 @@ def start_electron():
 def start_fastapi():
     """Starts FastAPI server in a separate thread."""
     def run():
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
 
     api_thread = threading.Thread(target=run, daemon=True)
     api_thread.start()
@@ -47,7 +46,6 @@ def update_loop():
                 module.run_update()
             except Exception as e:
                 print(f"⚠️ Error updating module {name}: {e}")
-                print(traceback.print_exc())
 
         time.sleep(1)  # Adjust update interval as needed
 
@@ -84,6 +82,4 @@ signal.signal(signal.SIGINT, handle_shutdown)
 print("🚀 Starting update loop thread...")
 update_thread = threading.Thread(target=update_loop, daemon=True)
 update_thread.start()
-
-print("✅ Smart Mirror Update Engine Running...")
 update_thread.join()  # Keep the main thread alive

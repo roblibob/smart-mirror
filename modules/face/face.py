@@ -35,7 +35,6 @@ class Module(BaseModule):
                     known_face_encodings.append(encoding[0])
                     known_face_names.append(os.path.splitext(filename)[0])
 
-        print(f"🔍 Loaded known faces: {known_face_names}")
         return known_face_encodings, known_face_names
 
     def detect_faces(self, frame):
@@ -76,7 +75,8 @@ class Module(BaseModule):
             self.cooldown_tracker[name] = now
 
             # Emit an event to notify that a face was detected
-            self.emit_event("face_detected", {"name": name})
+            if name != "Stranger":
+                self.emit_event("face_detected", {"name": name})
 
     def cleanup(self):
         """Releases resources."""

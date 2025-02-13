@@ -15,11 +15,13 @@ function createWindow() {
             nodeIntegration: true,
         },
     });
-
-    win.webContents.openDevTools();
+    win.maximize();
+    win.setFullScreen(true);
+    win.show();
 
     if (isDev) {
         // Load Vite dev server
+        win.webContents.openDevTools();
         win.loadURL("http://localhost:5173"); // Default Vite dev server port
     } else {
         // Load built production files

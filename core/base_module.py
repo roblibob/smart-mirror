@@ -1,7 +1,7 @@
 import time
 
 class BaseModule:
-    def __init__(self, config, event_bus, update_interval=5):
+    def __init__(self, config, event_bus, dependencies={}, update_interval=5):
         """
         Base class for all modules.
         
@@ -12,6 +12,7 @@ class BaseModule:
         self.event_bus = event_bus
         self.name = self.__class__.__name__  # Automatically set module name
         self.last_update = 0
+        self.modules = dependencies
         self.update_interval = config.get("update_interval", update_interval)
 
     def should_update(self):

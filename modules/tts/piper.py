@@ -1,4 +1,5 @@
 import os
+import threading
 import unicodedata
 import piper
 import piper_phonemize
@@ -44,7 +45,7 @@ class Module(BaseModule):
         output_path = os.path.abspath(output_file)
 
         # Debugging output
-        print(f"🗣️ Generating speech: '{text}' -> {output_path}")
+        print(f"🗣️ Generating speech to {output_path}")
 
         # Open a WAV file for writing
         with wave.open(output_path, "wb") as wav_file:
@@ -61,21 +62,34 @@ class Module(BaseModule):
         return output_path
 
     def handle_speak_request(self, data):
-        """Handles text-to-speech requests from the event bus."""
+        """Handles text-to-speech requests from the event bus asynchronously."""
         text = data.get("text", "")
+        word_count = len(text.split())
         if not text:
             print("⚠️ No text received for TTS.")
             return
 
-        print(f"🔊 Synthesizing speech: {text}")
+        print(f"🔊 Synthesizing speech: {word_count} words")
         audio_path = self.synthesize(text)
         self.event_bus.emit("tts_start", {"audio_path": audio_path, "text": text})
 
-        if self.os_type == "Darwin":  # macOS
-            subprocess.run(["afplay", audio_path], check=True)
-        elif self.os_type == "Linux":  # Linux
-            subprocess.run(["aplay", audio_path], check=True)
-        else:
-            print(f"⚠️ Unsupported OS: {self.os_type}. Cannot play audio.")
+        def play_and_emit():
+            """Plays the audio and emits the tts_done event when finished."""
+            try:
+                if self.os_type == "Darwin":  # macOS
+                    process = subprocess.Popen(["afplay", audio_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                elif self.os_type == "Linux":  # Linux
+                    process = subprocess.Popen(["aplay", audio_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    print(f"⚠️ Unsupported OS: {self.os_type}. Cannot play audio.")
+                    return
+                
+                process.wait()  # Wait until playback finishes
+            except Exception as e:
+                print(f"⚠️ Error playing audio: {e}")
+                return
 
-        self.event_bus.emit("tts_done", {"audio_path": audio_path})
+            self.event_bus.emit("tts_done", {"audio_path": audio_path})  # Emit when done
+
+        # Run playback in a separate thread to keep it async
+        threading.Thread(target=play_and_emit, daemon=True).start()

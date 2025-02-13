@@ -7,7 +7,6 @@ class Module(BaseModule):
         super().__init__(config, event_bus, update_interval=600)
         """Initialize the weather module."""
         self.location = self.config.get("location", "Skurup")  # Default location
-        print(f"🌤 Weather module initialized for {self.location}")
 
     def get_weather(self):
         """Fetch weather data from wttr.in."""
@@ -16,7 +15,8 @@ class Module(BaseModule):
             response = requests.get(url, timeout=5)
             response.raise_for_status()
             weather_data = response.json()
-            return weather_data
+            summary = self.parse_weather(weather_data)
+            return { "weather": weather_data, "summary": summary }
         except requests.RequestException as e:
             print(f"⚠️ Error fetching weather: {e}")
             return "Unknown weather"
@@ -24,8 +24,7 @@ class Module(BaseModule):
     def update(self):
         """Periodically fetch and emit weather updates."""
         weather = self.get_weather()
-        summary = self.parse_weather(weather)
-        self.event_bus.emit("weather_update", {"weather": weather, "summary": summary})
+        self.event_bus.emit("weather_update", weather)
 
     def parse_weather(self, data):
         """Parses weather data and generates a human-readable summary."""
@@ -53,4 +52,4 @@ class Module(BaseModule):
             return summary
         except Exception as e:
             print(f"⚠️ Error parsing weather data: {e}")
-            return None
+            return { "weather": "Unknown weather", "summary": "Unknown weather" }

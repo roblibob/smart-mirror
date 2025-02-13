@@ -1,33 +1,50 @@
 import importlib
-import traceback
 from core.config_loader import config
 from core.event_bus import event_bus
 
-def load_modules():
+def load_modules(event_bus):
     loaded_modules = {}
+    pending_modules = {}
 
+    # First, load all modules that have no dependencies
     for name, module_config in config.items():
         provider = module_config.get("provider")
-        if provider:
+        dependencies = module_config.get("dependencies", [])
+
+        if dependencies:
+            pending_modules[name] = {"config": module_config, "dependencies": dependencies}
+        else:
             try:
-                module_path = f"modules.{name}.{provider}"
-                module = importlib.import_module(module_path)
+                module = importlib.import_module(f"modules.{name}.{provider}")
+                loaded_modules[name] = module.Module(module_config, event_bus)
+                print(f"✅ Loaded module: {name}")
+            except ModuleNotFoundError:
+                print(f"⚠️ Module {name} not found, skipping.")
 
-                # Ensure each module defines a class named `Module`
-                module_class = getattr(module, "Module", None)
-                if module_class:
-                    module_instance = module_class(module_config, event_bus)  # Pass event bus
-                    loaded_modules[name] = module_instance
-                    print(f"✅ Loaded module: {name} ({provider})")
-                else:
-                    print(f"⚠️ No `Module` class found in {module_path}, skipping.")
+    # Now load modules that have dependencies
+    while pending_modules:
+        to_remove = []
+        for name, module_info in pending_modules.items():
+            dependencies_met = all(dep in loaded_modules for dep in module_info["dependencies"])
 
-            except ModuleNotFoundError as e:
-                print(f"⚠️ Module {module_path} not found, skipping: {e}")
-            except Exception as e:
-                print(f"⚠️ Error loading module {module_path}: {e}")
-                print(traceback.format_exc())
+            if dependencies_met:
+                provider = module_info["config"]["provider"]
+                try:
+                    module = importlib.import_module(f"modules.{name}.{provider}")
+                    loaded_modules[name] = module.Module(module_info["config"], event_bus, loaded_modules)
+                    print(f"✅ Loaded modulex: {name}")
+                    to_remove.append(name)  # Mark module for removal
+                except ModuleNotFoundError:
+                    print(f"⚠️ Module {name} not found, skipping.")
+
+        # Remove loaded modules from pending list
+        for name in to_remove:
+            del pending_modules[name]
+
+        if not to_remove:
+            print("⚠️ Circular dependency detected! Check module configurations.")
+            break
 
     return loaded_modules
 
-modules = load_modules()
+modules = load_modules(event_bus)

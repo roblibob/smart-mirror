@@ -1,14 +1,13 @@
 from core.base_module import BaseModule
 import google.generativeai as genai
-from datetime import datetime
+from datetime import datetime, time
 
 class Module(BaseModule):
-    def __init__(self, config, event_bus):
-        super().__init__(config, event_bus, update_interval=0)
+    def __init__(self, config, event_bus, dependencies):
+        super().__init__(config, event_bus, dependencies, update_interval=0)
         self.api_key = config.get("api_key")
         self.model_name = config.get("model", "gemini-1.5-flash")
-        self.instruction = config.get("instruction", "You are a AI assistant. Greet the user according to the time of day and present the agenda. The output is converted to speech so don't use headers or markdown. Be brief and concise.")
-        self.pending_greeting = {}
+        self.instruction = config.get("instruction", "You are a AI assistant. Greet the user according to the time of day and present the agenda. The output is converted to speech so don't use headers, markdown. Be brief and concise.")
         if self.api_key:
             genai.configure(api_key=self.api_key)
         else:
@@ -17,47 +16,38 @@ class Module(BaseModule):
         # Subscribe to face detection events
         self.on_event("face_detected", self.handle_face_detected)
 
-        # Subscribe to responses
-        self.on_event("agenda_response", self.handle_agenda_response)
-        self.on_event("weather_update", self.handle_weather_response)
-
     def handle_face_detected(self, data):
         try:
             """Handles face detection and generates a greeting."""
             name = data.get("name", "Stranger")
             print(f"🔍 Face detected: {name}, fetching agenda and weather...")
 
-            # Request agenda and weather via event bus
-            self.emit_event("fetch_agenda", {"name": name})
+            # Fetch agenda and weather directly
+            agenda_data = self.modules["calendar"].get_agenda(name)
+            agenda = self.format_agenda(agenda_data)
 
-            # Store data temporarily
-            self.pending_greeting = {"name": name, "agenda": "No agenda", "weather": "Unknown weather"}
-
+            weather_data = self.modules["weather"].get_weather()
+            self.generate_greeting(name, agenda, weather_data["summary"])
         except Exception as e:
             print(f"⚠️ Error handling face detection: {e}")
 
-
-    def handle_agenda_response(self, data):
+    def format_agenda(self, data):
         """Receives agenda from the calendar module."""
-        self.pending_greeting["agenda"] = data.get("events", "No agenda")
-        self.check_ready_to_generate()
+        now = datetime.now()
+        midnight = datetime.combine(now.date(), time(23, 59, 59))  # Set midnight for today
 
-    def handle_weather_response(self, data):
-        """Receives weather from the weather module."""
-        print(f"🌤️ Received weather response")
-        weather_summary = data["summary"]
-        self.pending_greeting["weather"] = data.get("summary", "Unknown weather")
-        self.check_ready_to_generate()
+        filtered_events = []
+        for event in data:
+            try:
+                event_date = datetime.strptime(event["date"], "%Y-%m-%d").date()  # Convert string to date
+                event_time = datetime.strptime(event["time"], "%H:%M").time()  # Convert string to time
+                event_datetime = datetime.combine(event_date, event_time)
+                if now <= event_datetime <= midnight:
+                    filtered_events.append(event)
+            except Exception as e:
+                print(f"⚠️ Error processing agenda event: {event} - {e}")
 
-    def check_ready_to_generate(self):
-        """Checks if both agenda and weather are available before generating greeting."""
-        print(f"🔍 Checking if ready to generate greeting...")
-        if "No agenda" not in self.pending_greeting["agenda"] or "Unknown weather" not in self.pending_greeting["weather"]:
-            self.generate_greeting(
-                self.pending_greeting["name"],
-                self.pending_greeting["agenda"],
-                self.pending_greeting["weather"],
-            )
+        return filtered_events
 
     def generate_greeting(self, name, agenda, weather):
         """Calls Gemini AI to generate a greeting."""
@@ -74,9 +64,7 @@ class Module(BaseModule):
             )
             prompt = f"Name: {name}. Current Time: {datetime.now()} Todays agenda: {agenda}. Current weather: {weather}"
             response = model.generate_content(prompt)
-            print(f"🎉 Generated greeting: {response.text}")
             self.emit_event("tts_text", {"text": response.text})
-            self.pending_greeting = {"name": "None", "agenda": "No agenda", "weather": "Unknown weather"}
             return response.text if response else "I couldn't generate a response."
         except Exception as e:
             print(f"⚠️ Error generating greeting: {e}")

@@ -7,6 +7,17 @@ function CalendarWidget() {
   useEffect(() => {
     const handleCalendarUpdate = (data) => {
       console.log("📅 Received calendar update:", data);
+      // order by date and time
+      data.events.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (dateA.toDateString() === dateB.toDateString()) {
+          const timeA = a.time.split(":").join("");
+          const timeB = b.time.split(":").join("");
+          return timeA - timeB;
+        }
+        return dateA - dateB;
+      });
       setEvents(data.events || []);
     };
 
